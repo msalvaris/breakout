@@ -82,12 +82,9 @@ install: ## Install the breakout repo. Run from the src directory
 
 # Called inside container
 train-example: ## Simple training example
-	train
+	train --video_path="/data/videos"
 
 train: ## Train model
-	train --data.dataset_dir="/data/ball_dataset" --system.work_dir="/data/experiments" --trainer.batch_size=128 --trainer.num_epochs=200
-
-movie: ## Generate world model movie using trained model
-	generate movie "/data/experiments/experiment_ball_2024-06-01_15:40:45/checkpoints/trained_model.pt" "/data/ball_dataset" "/data/movies"
+	train --system.work_dir="/data/experiments" --video_path="/data/videos"
 
 .PHONY: help build run stop clean save load

@@ -8,6 +8,7 @@ import torch
 import os
 from datetime import datetime
 import sys
+from gymnasium.wrappers import RecordEpisodeStatistics, RecordVideo
 
 
 def run_episode(agent, env, init_history, e, global_step, step, start_life, device):
@@ -84,6 +85,7 @@ def run_episode(agent, env, init_history, e, global_step, step, start_life, devi
 def get_config():
 
     C = utils.CfgNode()
+    C.video_path = None
 
     # system
     C.system = utils.CfgNode()
@@ -118,8 +120,14 @@ def main():
     os.makedirs(cfg.agent.logs_path, exist_ok=True)
     os.makedirs(cfg.agent.model_path, exist_ok=True)
 
-    env = gym.make('BreakoutDeterministic-v4')
     agent = DQNAgent(cfg.agent)
+    if cfg.video_path: # Record some episodes
+        env = gym.make('BreakoutDeterministic-v4',render_mode="rgb_array")
+        env = RecordVideo(env, video_folder=cfg.video_path, name_prefix="training",
+                  episode_trigger=lambda x: x % 100 == 0)
+        env = RecordEpisodeStatistics(env)
+    else:
+        env = gym.make('BreakoutDeterministic-v4')
 
     print("< Playing Atari Breakout >")
     global_step = 0
@@ -151,4 +159,5 @@ def main():
     except KeyboardInterrupt:
         print("Training interrupted - Saving model")
         agent.save_model()
+    env.close()
 

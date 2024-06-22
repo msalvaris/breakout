@@ -7,6 +7,9 @@ RUN apt update
 RUN apt install -y git libsndfile1-dev python3 python3-pip ffmpeg
 RUN python3 -m pip install --no-cache-dir --upgrade pip
 
+# For some reason gymnasium needs to have swig installed before
+RUN python3 -m pip install swig
+
 ARG REF=main
 
 # If set to nothing, will install the latest version
