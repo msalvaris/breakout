@@ -18,7 +18,7 @@ def agent_default_config():
     C.memory_size = 400000 
     C.lr = 0.00025
     C.load_model = False
-    C.model_path = "models/model.ckpt"
+    C.model_path = "models"
     C.logs_path = "logs"
     C.device = "cuda" if torch.cuda.is_available() else "cpu"
     C.action_size = 3
@@ -153,7 +153,7 @@ class DQNAgent:
         self.avg_loss += loss.item()
 
     def save_model(self):
-        torch.save(self.model.state_dict(), self.config.model_path)
+        torch.save(self.model.state_dict(), os.path.join(self.config.model_path, "model.pt"))
 
     def log_and_reset(self):
         self.q_log.append(self.avg_q_max)
