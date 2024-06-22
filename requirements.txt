@@ -1,0 +1,12 @@
+swig
+numpy<=1.26.4
+imageio
+imageio-ffmpeg==0.4.9
+Pillow
+wandb
+tqdm
+rich
+fire
+scikit-image
+gymnasium[all]
+gymnasium[accept-rom-license]
