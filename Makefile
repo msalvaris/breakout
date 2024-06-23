@@ -81,9 +81,6 @@ install: ## Install the breakout repo. Run from the src directory
 
 
 # Called inside container
-train-example: ## Simple training example
-	train --system.work_dir="/data/experiments" --video_path="/data/videos"
-
 train: ## Train model
 	train --system.work_dir="/data/experiments" --video_path="/data/videos"
 

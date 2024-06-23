@@ -2,7 +2,8 @@ from ast import literal_eval
 
 
 class CfgNode:
-    """ a lightweight configuration class inspired by yacs (A Karpathy)"""
+    """a lightweight configuration class inspired by yacs (A Karpathy)"""
+
     # TODO: convert to subclass from a dict like in yacs?
     # TODO: implement freezing to prevent shooting of own foot
     # TODO: additional existence/override checks when reading/writing params?
@@ -14,7 +15,7 @@ class CfgNode:
         return self._str_helper(0)
 
     def _str_helper(self, indent):
-        """ need to have a helper to support nested indentation for pretty printing """
+        """need to have a helper to support nested indentation for pretty printing"""
         parts = []
         for k, v in self.__dict__.items():
             if isinstance(v, CfgNode):
@@ -22,12 +23,15 @@ class CfgNode:
                 parts.append(v._str_helper(indent + 1))
             else:
                 parts.append("%s: %s\n" % (k, v))
-        parts = [' ' * (indent * 4) + p for p in parts]
+        parts = [" " * (indent * 4) + p for p in parts]
         return "".join(parts)
 
     def to_dict(self):
-        """ return a dict representation of the config """
-        return { k: v.to_dict() if isinstance(v, CfgNode) else v for k, v in self.__dict__.items() }
+        """return a dict representation of the config"""
+        return {
+            k: v.to_dict() if isinstance(v, CfgNode) else v
+            for k, v in self.__dict__.items()
+        }
 
     def merge_from_dict(self, d):
         self.__dict__.update(d)
@@ -44,9 +48,11 @@ class CfgNode:
         """
         for arg in args:
 
-            keyval = arg.split('=')
-            assert len(keyval) == 2, "expecting each override arg to be of form --arg=value, got %s" % arg
-            key, val = keyval # unpack
+            keyval = arg.split("=")
+            assert len(keyval) == 2, (
+                "expecting each override arg to be of form --arg=value, got %s" % arg
+            )
+            key, val = keyval  # unpack
 
             # first translate val into a python object
             try:
@@ -60,16 +66,18 @@ class CfgNode:
                 pass
 
             # find the appropriate object to insert the attribute into
-            assert key[:2] == '--'
-            key = key[2:] # strip the '--'
-            keys = key.split('.')
+            assert key[:2] == "--"
+            key = key[2:]  # strip the '--'
+            keys = key.split(".")
             obj = self
             for k in keys[:-1]:
                 obj = getattr(obj, k)
             leaf_key = keys[-1]
 
             # ensure that this attribute exists
-            assert hasattr(obj, leaf_key), f"{key} is not an attribute that exists in the config"
+            assert hasattr(
+                obj, leaf_key
+            ), f"{key} is not an attribute that exists in the config"
 
             # overwrite the attribute
             print("command line overwriting config attribute %s with %s" % (key, val))

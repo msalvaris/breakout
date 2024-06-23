@@ -1,22 +1,19 @@
-import gymnasium as gym
-from breakout.agent import DQNAgent
-import numpy as np
-import random
-from breakout.agent import pre_processing, agent_default_config
-from breakout import utils
-import torch
 import os
-from datetime import datetime
+import random
 import sys
+from datetime import datetime
+
+import gymnasium as gym
+import numpy as np
+import torch
 from gymnasium.wrappers import RecordEpisodeStatistics, RecordVideo
+
+from breakout import utils
+from breakout.agent import DQNAgent, agent_default_config, pre_processing
 
 
 def run_episode(agent, env, init_history, e, global_step, step, start_life, device):
-    action_map = {
-        0:1,
-        1:2,
-        2:3
-    }
+    action_map = {0: 1, 1: 2, 2: 3}
     done = False
     dead = False
     history = init_history
@@ -37,25 +34,25 @@ def run_episode(agent, env, init_history, e, global_step, step, start_life, devi
         # pre-process the observation --> history
         next_state = pre_processing(observe)
         next_state = np.reshape([next_state], (1, 1, 84, 84))
-        next_history = np.append(next_state, history[:, :3, :, :], axis = 1)
+        next_history = np.append(next_state, history[:, :3, :, :], axis=1)
 
-        q_val = agent.model(torch.tensor(history / 255, dtype = torch.float).to(device))
+        q_val = agent.model(torch.tensor(history / 255, dtype=torch.float).to(device))
         q_val = q_val.detach().cpu().numpy()[0]
         agent.avg_q_max += np.max(q_val)
 
         # if the agent missed ball, agent is dead --> episode is not over
-        if start_life > info['lives']:
+        if start_life > info["lives"]:
             dead = True
-            start_life = info['lives']
+            start_life = info["lives"]
 
         agent.unclipped_score += reward
-        reward = np.clip(reward, -1., 1.)
+        reward = np.clip(reward, -1.0, 1.0)
         agent.clipped_score += reward
 
         # save the sample <s, a, r, s'> to the replay memory
         agent.replay_memory(history, action, reward, next_history, dead)
 
-        # every some time interval, train model
+        # ever so often train model
         agent.train_replay()
 
         # update the target model with model
@@ -70,17 +67,27 @@ def run_episode(agent, env, init_history, e, global_step, step, start_life, devi
 
         # if done, plot the score over episodes
         if done:
-            print("episode:", e,
-                "  score:", agent.unclipped_score,
-                "  clipped score:", agent.clipped_score,
-                "  memory length:", len(agent.memory),
-                "\nepsilon:", agent.epsilon,
-                "  global_step:", global_step,
-                "  average_q:", agent.avg_q_max / float(step),
-                "  average loss:", agent.avg_loss / float(step))
-            # e += 1
+            print(
+                "episode:",
+                e,
+                "  score:",
+                agent.unclipped_score,
+                "  clipped score:",
+                agent.clipped_score,
+                "  memory length:",
+                len(agent.memory),
+                "\nepsilon:",
+                agent.epsilon,
+                "  global_step:",
+                global_step,
+                "  average_q:",
+                agent.avg_q_max / float(step),
+                "  average loss:",
+                agent.avg_loss / float(step),
+            )
             agent.log_and_reset()
-    return global_step,step
+    return global_step, step
+
 
 def get_config():
 
@@ -111,9 +118,11 @@ def main():
 
     print(f"Starting training {experiment_id}")
     print(f"running on device {cfg.agent.device}")
-    
+
     workdir = os.path.join(cfg.system.work_dir, experiment_id)
-    os.makedirs(workdir, exist_ok=True) # Check we are able to save results to appropriate location
+    os.makedirs(
+        workdir, exist_ok=True
+    )  # Check we are able to save results to appropriate location
 
     cfg.agent.logs_path = os.path.join(workdir, cfg.agent.logs_path)
     cfg.agent.model_path = os.path.join(workdir, cfg.agent.model_path)
@@ -121,17 +130,21 @@ def main():
     os.makedirs(cfg.agent.model_path, exist_ok=True)
 
     agent = DQNAgent(cfg.agent)
-    if cfg.video_path: # Record some episodes
-        env = gym.make('BreakoutDeterministic-v4',render_mode="rgb_array")
-        env = RecordVideo(env, video_folder=cfg.video_path, name_prefix="training",
-                  episode_trigger=lambda x: x % 100 == 0)
+    if cfg.video_path:  # Record some episodes
+        env = gym.make("BreakoutDeterministic-v4", render_mode="rgb_array")
+        env = RecordVideo(
+            env,
+            video_folder=cfg.video_path,
+            name_prefix="training",
+            episode_trigger=lambda x: x % 100 == 0,
+        )
         env = RecordEpisodeStatistics(env)
     else:
-        env = gym.make('BreakoutDeterministic-v4')
+        env = gym.make("BreakoutDeterministic-v4")
 
     print("< Playing Atari Breakout >")
     global_step = 0
-    
+
     e = 1
     try:
         while True:
@@ -143,15 +156,24 @@ def main():
             # this is one of DeepMind's idea.
             # just do nothing at the start of episode to avoid sub-optimal initialisation
             for _ in range(random.randint(1, agent.no_op_steps)):
-                observe, _, _, _ , _= env.step(1)
+                observe, _, _, _, _ = env.step(1)
 
             # At start of episode, there is no preceding frame
             # So just copy initial states to make history
             state = pre_processing(observe)
             init_history = np.stack((state, state, state, state))
-            init_history = np.expand_dims(init_history, axis = 0)
+            init_history = np.expand_dims(init_history, axis=0)
 
-            global_step, step = run_episode(agent, env, init_history, e, global_step, step, start_life, cfg.agent.device)
+            global_step, step = run_episode(
+                agent,
+                env,
+                init_history,
+                e,
+                global_step,
+                step,
+                start_life,
+                cfg.agent.device,
+            )
             e += 1
 
             if e % 1000 == 0:
@@ -160,4 +182,3 @@ def main():
         print("Training interrupted - Saving model")
         agent.save_model()
     env.close()
-

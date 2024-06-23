@@ -1,14 +1,15 @@
-import gymnasium as gym
-from breakout.agent import DQNAgent
-import numpy as np
-import random
-from breakout.agent import pre_processing, agent_default_config
-from breakout import utils
-import torch
 import os
-from datetime import datetime
+import random
 import sys
+from datetime import datetime
+
+import gymnasium as gym
+import numpy as np
+import torch
 from gym.wrappers.record_video import RecordVideo
+
+from breakout import utils
+from breakout.agent import DQNAgent, agent_default_config, pre_processing
 
 
 def get_config():
